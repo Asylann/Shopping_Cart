@@ -5,6 +5,8 @@ import com.ecommerce.builder.ProductDirector;
 import com.ecommerce.factory.ProductFactory;
 import com.ecommerce.strategy.DiscountStrategy;
 import com.ecommerce.observer.Customer;
+import com.ecommerce.observer.StockUpdateNotifier;
+import com.ecommerce.observer.PriceUpdateNotifier;
 import com.ecommerce.observer.ProductInventory;
 import com.ecommerce.decorator.BaseCartItem;
 import com.ecommerce.decorator.CartItem;
@@ -12,6 +14,11 @@ import com.ecommerce.decorator.GiftWrapDecorator;
 import com.ecommerce.decorator.WarrantyDecorator;
 import com.ecommerce.cart.ShoppingCart;
 
+/**
+ * Facade for the e-commerce system.
+ * Follows Facade Pattern and Single Responsibility Principle - provides a unified interface.
+ * Follows Dependency Inversion Principle - depends on abstractions.
+ */
 public class ECommerceFacade {
     private final ProductDirector productDirector;
     private final ProductFactory productFactory;
@@ -29,7 +36,17 @@ public class ECommerceFacade {
         this.cart = cart;
     }
 
+    /**
+     * Add a product to cart with optional decorations.
+     */
     public void addProductToCart(String name, double price, boolean giftWrap, boolean warranty) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Product name cannot be null or blank");
+        }
+        if (price < 0) {
+            throw new IllegalArgumentException("Price cannot be negative");
+        }
+
         CartItem item = new BaseCartItem(name, price);
         if (giftWrap) {
             item = new GiftWrapDecorator(item);
@@ -40,27 +57,57 @@ public class ECommerceFacade {
         cart.addItem(item);
     }
 
+    /**
+     * Set discount strategy for the cart.
+     */
     public void setDiscountStrategy(DiscountStrategy strategy) {
+        if (strategy == null) {
+            throw new IllegalArgumentException("Discount strategy cannot be null");
+        }
         cart.setDiscountStrategy(strategy);
     }
 
+    /**
+     * Subscribe a customer to inventory updates.
+     */
     public void subscribeCustomer(Customer customer) {
-        inventory.addStockObserver(customer);
-        inventory.addPriceObserver(customer);
+        if (customer == null) {
+            throw new IllegalArgumentException("Customer cannot be null");
+        }
+        inventory.addStockObserver(new StockUpdateNotifier(customer));
+        inventory.addPriceObserver(new PriceUpdateNotifier(customer));
     }
 
+    /**
+     * Calculate cart total with applied discount.
+     */
     public double calculateTotal() {
         return cart.calculateTotal();
     }
 
+    /**
+     * Update inventory stock for a product.
+     */
     public void updateInventory(String productName, int quantity) {
+        if (productName == null || productName.isBlank()) {
+            throw new IllegalArgumentException("Product name cannot be null or blank");
+        }
         inventory.updateStock(productName, quantity);
     }
 
+    /**
+     * Update price for a product.
+     */
     public void updatePrice(String productName, double price) {
+        if (productName == null || productName.isBlank()) {
+            throw new IllegalArgumentException("Product name cannot be null or blank");
+        }
         inventory.updatePrice(productName, price);
     }
 
+    /**
+     * Run a demonstration of all design patterns.
+     */
     public void demo() {
         // Demo Builder Pattern
         Product smartphone = productDirector.createSmartphone();

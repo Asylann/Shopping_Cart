@@ -1,23 +1,32 @@
 package com.ecommerce.observer;
 
-public class Customer implements StockUpdate, PriceUpdate {
+import java.util.ArrayList;
+import java.util.List;
+
+public class Customer {
     private final String name;
+    private final List<CustomerNotificationObserver> notificationObservers;
 
     public Customer(String name) {
         this.name = name;
+        this.notificationObservers = new ArrayList<>();
     }
 
-    @Override
-    public void onStockUpdate(String productName, int quantity) {
-        if (quantity < 5) {
-            System.out.println("Notification for " + name + ": " + productName + " - Low stock alert: " + quantity + " units remaining");
+    public void addNotificationObserver(CustomerNotificationObserver observer) {
+        notificationObservers.add(observer);
+    }
+
+    public void removeNotificationObserver(CustomerNotificationObserver observer) {
+        notificationObservers.remove(observer);
+    }
+
+    public void notifyObservers(String productName, String message) {
+        for (CustomerNotificationObserver observer : notificationObservers) {
+            observer.notify(name, productName, message);
         }
     }
 
-    @Override
-    public void onPriceUpdate(String productName, double newPrice, double oldPrice) {
-        if (newPrice < oldPrice) {
-            System.out.println("Notification for " + name + ": " + productName + " - Price dropped from $" + oldPrice + " to $" + newPrice);
-        }
+    public String getName() {
+        return name;
     }
 }
